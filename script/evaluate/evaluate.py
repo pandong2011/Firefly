@@ -52,11 +52,11 @@ for model_name_or_path in model_name_or_paths:
 
 
 # 指定评测集
-with read_base():
-    from .datasets.ceval.ceval_ppl import ceval_datasets
-    from .summarizers.example import summarizer
+# with read_base():
+#     from .datasets.ceval.ceval_ppl import ceval_datasets
+#     from .summarizers.example import summarizer
 
-datasets = [*ceval_datasets]
+# datasets = [*ceval_datasets]
 
 
 # python run.py configs/eval_demo.py -w outputs/firefly

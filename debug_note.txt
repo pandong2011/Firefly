@@ -1,0 +1,150 @@
+## dataset
+# utterances
+['下面两个句子是否表达了相同的意思：\n文本1：我的借呗为什么不能自动还款了\n文本2：蚂蚁借呗自动还款怎么去找\n选项：相似，不相似\n答案：', '不相同']
+
+# utterances_ids
+# len = 2
+[[100431, 100369, 109949, 64471, 111099, 102486, 105855, 28311, 108704, 16, 5122, 97611, 99588, 111382, 100678, 53153, 100756, 110005, 34187, 198, 108704, 17, 5122, 109897, 99588, 111382, 100756, 110005, 99494, 107328, 198, 109487, 5122, 105790, 3837, 16530, 105790, 198, 102349, 5122], [16530, 102486]]
+
+# bos: 151643
+# eos: 151643
+# input_ids
+[151643, 100431, 100369, 109949, 64471, 111099, 102486, 105855, 28311, 108704, 16, 5122, 97611, 99588, 111382, 100678, 53153, 100756, 110005, 34187, 198, 108704, 17, 5122, 109897, 99588, 111382, 100756, 110005, 99494, 107328, 198, 109487, 5122, 105790, 3837, 16530, 105790, 198, 102349, 5122, 151643]
+
+# target_mask
+# len(utterances_id) + 1
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+
+# attention_mask
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+
+
+## collator
+# max_seq_length = 1024
+# lengths
+[45, 43, 40, 29, 29, 36, 27, 59, 55, 42, 33, 41]
+# batch_max_len = min(max(lengths), self.max_seq_length)
+59
+
+# tokenizer.pad_token_id = tokenizer.eod_id
+# tokenizer.bos_token_id = tokenizer.eod_id
+# tokenizer.eos_token_id = tokenizer.eod_id
+# qwen: bos,eos,pad
+151643
+
+# pad_target_mask
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# 二维数组: input_ids_batch, attention_mask_batch, target_mask_batch = [], [], []
+
+
+
+## loss
+# [batch_size, seq_len, d_k]
+# logits.shape: torch.Size([12, 59, 152064])
+# self.ignore_index: -100
+# 58 = 59 - 1
+# shift_logits.shape: torch.Size([12, 58, 152064])
+# shift_labels.shape: torch.Size([12, 58])
+# (shift_logits.view(-1, shift_logits.size(-1))).shape: torch.Size([12*58, 152064])
+# (shift_labels.view(-1)).shape: torch.Size([1, 12*58])
+
+
+
+
+
+
+# find_all_linear_names
+# 找出所有全连接层，为所有全连接添加adapter
+# cls = bnb.nn.Linear4bit
+# name: 'transformer.h.0.attn.c_attn'
+# names: ['transformer', 'h', '0', 'attn', 'c_attn']
+# lora_module_names: {'w1', 'c_attn', 'w2', 'c_proj'}
+# (need remove)(lm_head): Linear(in_features=5120, out_features=152064, bias=False)
+
+# OrderedDict
+QWenLMHeadModel(
+  (transformer): QWenModel(
+    (wte): Embedding(152064, 5120)
+    (drop): Dropout(p=0.0, inplace=False)
+    (rotary_emb): RotaryEmbedding()
+    (h): ModuleList(
+      (0-39): 40 x QWenBlock(
+        (ln_1): RMSNorm()
+        (attn): QWenAttention(
+          (c_attn): Linear4bit(in_features=5120, out_features=15360, bias=True)
+          (c_proj): Linear4bit(in_features=5120, out_features=5120, bias=False)
+          (attn_dropout): Dropout(p=0.0, inplace=False)
+        )
+        (ln_2): RMSNorm()
+        (mlp): QWenMLP(
+          (w1): Linear4bit(in_features=5120, out_features=13696, bias=False)
+          (w2): Linear4bit(in_features=5120, out_features=13696, bias=False)
+          (c_proj): Linear4bit(in_features=13696, out_features=5120, bias=False)
+        )
+      )
+    )
+    (ln_f): RMSNorm()
+  )
+  (lm_head): Linear(in_features=5120, out_features=152064, bias=False)
+)
+
+# OrderedDict
+QWenModel(
+  (wte): Embedding(152064, 5120)
+  (drop): Dropout(p=0.0, inplace=False)
+  (rotary_emb): RotaryEmbedding()
+  (h): ModuleList(
+    (0-39): 40 x QWenBlock(
+      (ln_1): RMSNorm()
+      (attn): QWenAttention(
+        (c_attn): Linear4bit(in_features=5120, out_features=15360, bias=True)
+        (c_proj): Linear4bit(in_features=5120, out_features=5120, bias=False)
+        (attn_dropout): Dropout(p=0.0, inplace=False)
+      )
+      (ln_2): RMSNorm()
+      (mlp): QWenMLP(
+        (w1): Linear4bit(in_features=5120, out_features=13696, bias=False)
+        (w2): Linear4bit(in_features=5120, out_features=13696, bias=False)
+        (c_proj): Linear4bit(in_features=13696, out_features=5120, bias=False)
+      )
+    )
+  )
+  (ln_f): RMSNorm()
+)
+
+
+
+TransformerLanguageModel(
+  (token_embedding_lookup_table): Embedding(100071, 64)
+  (transformer_blocks): Sequential(
+    (0-11): TransformerBlock(
+      (multi_head_attention_layer): MultiHeadAttention(
+        (heads): ModuleList(
+          (0-7): 8 x Attention(
+            (key_layer): Linear(in_features=64, out_features=16, bias=False)
+            (query_layer): Linear(in_features=64, out_features=16, bias=False)
+            (value_layer): Linear(in_features=64, out_features=16, bias=False)
+            (dropout_layer): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (projection_layer): Linear(in_features=64, out_features=64, bias=True)
+        (dropout_layer): Dropout(p=0.1, inplace=False)
+      )
+      (feed_forward_layer): FeedForward(
+        (ffn): Sequential(
+          (0): Linear(in_features=64, out_features=256, bias=True)
+          (1): ReLU()
+          (2): Linear(in_features=256, out_features=64, bias=True)
+          (3): Dropout(p=0.1, inplace=False)
+        )
+      )
+      (layer_norm_1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      (layer_norm_2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+    )
+    (12): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+  )
+  (language_model_output_linear_layer): Linear(in_features=64, out_features=100070, bias=True)
+)

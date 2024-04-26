@@ -61,7 +61,7 @@ def setup_everything():
 
     # check some setting
     assert args.task_type in ['pretrain', 'sft', 'dpo'], "task_type should be in ['pretrain', 'sft', 'dpo']"
-    assert args.train_mode in ['full', 'lora', 'qlora'], "task_type should be in ['full', 'lora', 'qlora']"
+    assert args.train_mode in ['full', 'lora', 'qlora'], "train_mode should be in ['full', 'lora', 'qlora']"
     assert sum([training_args.fp16, training_args.bf16]) == 1, "only one of fp16 and bf16 can be True"
 
     return args, training_args
@@ -90,6 +90,7 @@ def load_pretrain_dataset(training_args, args, tokenizer):
     """
     多线程预处理预训练数据
     """
+
     def tokenize_function(examples):
         output = tokenizer(examples["text"])
         output = {'input_ids': output.input_ids}
@@ -141,7 +142,7 @@ def load_pretrain_dataset(training_args, args, tokenizer):
                 processed_dataset = datasets.load_from_disk(cache_path, keep_in_memory=False)
                 logger.info(f'Finished loading datasets-{file_name} from cache')
             except Exception:
-                tmp_cache_path = join(cache_path, 'tmp')    # 临时缓存目录，会被自动删除
+                tmp_cache_path = join(cache_path, 'tmp')  # 临时缓存目录，会被自动删除
                 logger.info(f'There is no cache of file {file_name}, start preprocessing...')
                 raw_dataset = load_dataset("json", data_files=file, cache_dir=tmp_cache_path, keep_in_memory=False)
                 tokenized_dataset = raw_dataset.map(
@@ -260,6 +261,7 @@ def load_model(args, training_args):
         else:
             def make_inputs_require_grad(module, input, output):
                 output.requires_grad_(True)
+
             model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
     # init peft_config
@@ -285,7 +287,8 @@ def load_model(args, training_args):
 
     # init ref_model
     if args.task_type == 'dpo':
-        ref_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, **model_kwargs) if args.train_mode == 'full' else None
+        ref_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path,
+                                                         **model_kwargs) if args.train_mode == 'full' else None
     # pretrain和sft，不需要ref_model
     else:
         ref_model = None
